@@ -75,7 +75,7 @@ DESC="Resize File System."
 
 case "$1" in
   start)
-	echo "Starting $DESC: "
+    echo "Starting $DESC: "
 
     if [ -x /etc/init.d/resize2fs_once ]; then
       /etc/init.d/resize2fs_once start
@@ -89,21 +89,21 @@ case "$1" in
       reboot
     fi
 
-	;;
+    ;;
   stop)
-	echo "Stop $DESC: "
-	;;
+    echo "Stop $DESC: "
+    ;;
   restart|force-reload)
-	echo "Restarting $DESC: "
-	$0 stop
-	sleep 1
-	$0 start
-	echo ""
-	;;
+    echo "Restarting $DESC: "
+    $0 stop
+    sleep 1
+    $0 start
+    echo ""
+    ;;
   *)
-	echo "Usage: $0 {start|stop|restart|force-reload}" >&2
-	exit 1
-	;;
+    echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+    exit 1
+    ;;
 esac
 
 exit 0
