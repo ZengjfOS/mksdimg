@@ -1,0 +1,114 @@
+#!/bin/sh
+
+if [ $# != 1 ]; then
+
+    echo "USAGE:"
+    echo "    mksdimg <img | mount | umount | clean>"
+    echo "        1. img: make a img file."
+    echo "        2. mount: mount img file system."
+    echo "        3. umount: umount img file system."
+    echo "        4. clean: clean img file."
+
+    exit 1;
+
+fi
+
+if [ $1 = "img" ]; then
+
+    set -x
+
+    if [ ! -f "rootfs.tar.bz2" ]; then
+        echo "error: Please Check rootfs.tar.bz2 file exist in current directory."
+        exit 1
+    fi
+    
+    if [ ! -f "u-boot.bin" ]; then
+        echo "error: Please Check u-boot.bin file exist in current directory."
+        exit 1
+    fi
+    
+    if [ ! -f "uImage" ]; then
+        echo "error: Please Check uImage file exist in current directory."
+        exit 1
+    fi
+    
+    # partition size in MB
+    BOOT_ROM_SIZE=10
+    BOOT_ROM_SIZE_Sector=`echo "${BOOT_ROM_SIZE} * 2 * 1024" | bc`
+    
+    echo "${BOOT_ROM_SIZE} * 2 * 1024 Sector(Sector = 512B) = ${BOOT_ROM_SIZE_Sector} Sector(Sector = 512B) = ${BOOT_ROM_SIZE} MB"
+    
+    # generate a 120M virtual sd disk
+    sudo dd if=/dev/zero of=sd.img bs=1M count=120
+    node=`sudo losetup -f --show sd.img`
+    
+    echo "sd.img device node: ${node}"
+    
+    # 
+    # zengjf@zengjf:~/zengjf/zengjfos/buildroot-2017.02.3/output/mksdimg$ ./work
+    # 10 * 2 * 1024 Sector(Sector = 512B) = 20480 Sector(Sector = 512B) = 10 MB
+    # 120+0 records in
+    # 120+0 records out
+    # 125829120 bytes (126 MB, 120 MiB) copied, 0.792955 s, 159 MB/s
+    # sd.img device node: /dev/loop0
+    # Checking that no-one is using this disk right now ... OK
+    # 
+    # Disk /dev/loop0: 120 MiB, 125829120 bytes, 245760 sectors
+    # Units: sectors of 1 * 512 = 512 bytes
+    # Sector size (logical/physical): 512 bytes / 512 bytes
+    # I/O size (minimum/optimal): 512 bytes / 512 bytes
+    # 
+    # >>> Created a new DOS disklabel with disk identifier 0xe166ee1f.
+    # Created a new partition 1 of type 'W95 FAT32 (LBA)' and of size 110 MiB.
+    # /dev/loop0p2: 
+    # New situation:
+    # 
+    # Device       Boot Start    End Sectors  Size Id Type
+    # /dev/loop0p1      20480 245759  225280  110M  c W95 FAT32 (LBA)
+    # 
+    # The partition table has been altered.
+    # Calling ioctl() to re-read partition table.
+    # Re-reading the partition table failed.: Invalid argument
+    # The kernel still uses the old table. The new table will be used at the next reboot or after you run partprobe(8) or kpartx(8).
+    # Syncing disks.
+    #
+sudo sfdisk --force -uS ${node} << EOF
+${BOOT_ROM_SIZE_Sector},,0c
+EOF
+    
+    sudo kpartx -av ${node}
+    
+    sudo dd if=u-boot.bin of=${node} bs=512 seek=2 skip=2
+    sudo dd if=uImage of=${node} bs=1M seek=1 conv=fsync 
+    
+    sudo mkfs.ext3 /dev/mapper/${node##*/}p1
+    
+    sudo mount -t ext3 /dev/mapper/${node##*/}p1 /mnt
+    sudo tar jxvf rootfs.tar.bz2 -C /mnt
+    sudo umount /mnt
+    
+    sudo kpartx -d ${node}
+    sudo losetup -d ${node}
+
+    exit 0
+fi
+
+if [ $1 = "mount" ]; then
+    node=`sudo losetup -f --show sd.img`
+    sudo kpartx -av ${node}
+    # sudo mount -t ext3 /dev/mapper/${node##*/}p1 /mnt
+fi
+
+if [ $1 = "umount" ]; then
+    # sudo umount /mnt
+    
+    nodes=`sudo losetup -l -n | awk '{print $1}' | xargs`
+    sudo kpartx -d ${nodes}
+    sudo losetup -D ${nodes}
+fi
+
+if [ $1 = "clean" ]; then
+    sudo rm sd.img
+fi
+
+
