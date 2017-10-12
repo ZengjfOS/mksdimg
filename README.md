@@ -1,4 +1,4 @@
-# mksdimg
+# Make SD Card Image Tool
 
 主要是实际操作一下怎么自动生成一个SD卡img文件，仅仅针对i.MX6 Linux Kernel 3.0.35版本。
 
@@ -29,7 +29,7 @@ USAGE:
 * 依赖文件：
   * `u-boot.bin`
   * `uImage`
-  * `[rootfs.tar.bz2](https://github.com/ZengjfOS/ARMBaseFS/tree/i.mx6_base_fs)`: `cd <your filesystem path> && fakeroot -- tar jcvf rootfs.tar.bz2 *`
+  * [rootfs.tar.bz2](https://github.com/ZengjfOS/ARMBaseFS/tree/i.mx6_base_fs): `cd <your filesystem path> && fakeroot -- tar jcvf rootfs.tar.bz2 *`
 
 ## 生成sd.img文件输出信息
 
