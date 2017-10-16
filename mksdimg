@@ -1,9 +1,9 @@
 #!/bin/sh
 
-if [ $# != 1 ]; then
+if [ $# -lt 1 ]; then
 
     echo "USAGE:"
-    echo "    mksdimg <img | mount | umount | clean>"
+    echo "    mksdimg <img [size(M)] | mount | umount | clean>"
     echo "        1. img: make a img file."
     echo "        2. mount: mount img file system."
     echo "        3. umount: umount img file system."
@@ -31,6 +31,13 @@ if [ $1 = "img" ]; then
         echo "error: Please Check uImage file exist in current directory."
         exit 1
     fi
+
+    # img file size MB
+    SD_IMG_SIZE=600
+    if [ $# = 2 ]; then
+        SD_IMG_SIZE=$2
+    fi
+    echo $SD_IMG_SIZE
     
     # partition size in MB
     BOOT_ROM_SIZE=10
@@ -39,7 +46,7 @@ if [ $1 = "img" ]; then
     echo "${BOOT_ROM_SIZE} * 2 * 1024 Sector(Sector = 512B) = ${BOOT_ROM_SIZE_Sector} Sector(Sector = 512B) = ${BOOT_ROM_SIZE} MB"
     
     # generate a 120M virtual sd disk
-    sudo dd if=/dev/zero of=sd.img bs=1M count=120
+    sudo dd if=/dev/zero of=sd.img bs=1M count=${SD_IMG_SIZE}
     node=`sudo losetup -f --show sd.img`
     
     echo "sd.img device node: ${node}"
@@ -84,7 +91,13 @@ EOF
     sudo mkfs.ext3 /dev/mapper/${node##*/}p1
     
     sudo mount -t ext3 /dev/mapper/${node##*/}p1 /mnt
-    sudo tar jxvf rootfs.tar.bz2 -C /mnt
+    sudo tar jxvf rootfs.tar.bz2 -C /mnt > /dev/null
+
+    echo  ---------------------------------------
+    echo   "disk usage: `df -h | grep /mnt 2>/dev/null`"
+    echo   "disk usage: `du -sh /mnt 2>/dev/null | awk '{print $1}'`"
+    echo  ---------------------------------------
+
     sudo umount /mnt
     
     sudo kpartx -d ${node}
@@ -108,7 +121,10 @@ if [ $1 = "umount" ]; then
 fi
 
 if [ $1 = "clean" ]; then
-    sudo rm sd.img
+    sudo rm sd.img rootfs.tar.bz2 u-boot.bin uImage
+    touch rootfs.tar.bz2
+    touch u-boot.bin
+    touch uImage
 fi
 
 
