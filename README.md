@@ -2,6 +2,8 @@
 
 主要是实际操作一下怎么自动生成一个SD卡img文件，仅仅针对i.MX6 Linux Kernel 3.0.35版本。
 
+配合文件系统合成打包脚本[retar](https://github.com/ZengjfOS/ARMBaseFS/blob/BuildrootExampleFS/retar)打包。
+
 ## 参考文档
 
 * [制作SD卡img文件，并扩容](http://www.cnblogs.com/zengjfgit/p/6443658.html)
