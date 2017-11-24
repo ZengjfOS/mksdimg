@@ -17,28 +17,57 @@ if [ $1 = "img" ]; then
 
     set -x
 
+    sudo rm sd.img
+    sync
+
+    # make and copy rootfs.tar.bz2
+    cd ../../ && make && cd output/mksdimg && cp ../images/rootfs.tar.bz2 .
+
+    # get file system size
+    if [ -d "../target" ]; then
+        ROOTFS_SIZE=`cd ../target && du -hs | awk '{print $1}'`
+        echo "rootfs file system size: ${ROOTFS_SIZE} MB."
+
+        # img file size MB
+        SD_IMG_SIZE=`echo "${ROOTFS_SIZE%%M} + 50" | bc`
+    else
+        SD_IMG_SIZE=150
+    fi
+    echo "SD CARD size: ${SD_IMG_SIZE} MB."
+
+
+    # check u-boot/uImage/rootfs.tar.bz2 is OK
     if [ ! -f "rootfs.tar.bz2" ]; then
         echo "error: Please Check rootfs.tar.bz2 file exist in current directory."
         exit 1
+    else 
+        if [ `ls -l rootfs.tar.bz2 | awk '{print $5}'` = "0" ]; then
+            echo "error: Please Check rootfs.tar.bz2 file size."
+            exit 1
+        fi
     fi
     
     if [ ! -f "u-boot.bin" ]; then
         echo "error: Please Check u-boot.bin file exist in current directory."
         exit 1
+    else 
+        if [ `ls -l u-boot.bin | awk '{print $5}'` = "0" ]; then
+            echo "error: Please Check u-boot.bin file size."
+            exit 1
+        fi
     fi
+
     
     if [ ! -f "uImage" ]; then
         echo "error: Please Check uImage file exist in current directory."
         exit 1
+    else 
+        if [ `ls -l uImage | awk '{print $5}'` = "0" ]; then
+            echo "error: Please Check uImage file size."
+            exit 1
+        fi
     fi
 
-    # img file size MB
-    SD_IMG_SIZE=600
-    if [ $# = 2 ]; then
-        SD_IMG_SIZE=$2
-    fi
-    echo $SD_IMG_SIZE
-    
     # partition size in MB
     BOOT_ROM_SIZE=10
     BOOT_ROM_SIZE_Sector=`echo "${BOOT_ROM_SIZE} * 2 * 1024" | bc`
@@ -91,18 +120,32 @@ EOF
     sudo mkfs.ext3 /dev/mapper/${node##*/}p1
     
     sudo mount -t ext3 /dev/mapper/${node##*/}p1 /mnt
-    sudo tar jxvf rootfs.tar.bz2 -C /mnt > /dev/null
+    # sudo tar jxvf rootfs.tar.bz2 -C /mnt > /dev/null
+    sudo tar jxvf rootfs.tar.bz2 -C /mnt 
 
     echo  ---------------------------------------
     echo   "disk usage: `df -h | grep /mnt 2>/dev/null`"
     echo   "disk usage: `du -sh /mnt 2>/dev/null | awk '{print $1}'`"
     echo  ---------------------------------------
 
+    sync
+    sudo sync
+
     sudo umount /mnt
     
     sudo kpartx -d ${node}
     sudo losetup -d ${node}
 
+    sync
+    sudo sync
+    sleep 3
+
+    if [ -d "/media/aplex/BOOT" ]; then
+        cp sd.img /media/aplex/BOOT
+    fi
+
+    sync
+    
     exit 0
 fi
 
@@ -126,5 +169,3 @@ if [ $1 = "clean" ]; then
     touch u-boot.bin
     touch uImage
 fi
-
-
