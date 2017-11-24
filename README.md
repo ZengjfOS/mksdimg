@@ -10,18 +10,25 @@
 
 ## 烧录工具
 
-[MfgToolA51 —— 1.6 Linux3.0.35-img-eMMC-MX6DL-ALL.vbs：](https://github.com/ZengjfOS/MfgToolA51#16-linux3035-img-emmc-mx6dl-allvbs)
+[MfgTool —— 1.6 Linux3.0.35-img-eMMC-MX6DL-ALL.vbs：](https://github.com/ZengjfOS/MfgTool#16-linux3035-emmc-mx6dl-imgvbs)
 
-## SD自动扩容脚本
+## SD自动挂载、扩容、合成脚本
 
-[S72resizefs](S72resizefs)
+* 自动挂载：
+  * [mdev.conf](mdev.conf)
+  * [automount.sh](automount.sh)
+* 自动扩容脚本：
+  * [S72resizefs](S72resizefs)
+* 自动合成：
+  * [retar](retar)
+  * [mksdimg](mksdimg)
 
 ## mksdimg使用说明
 
 * 使用方法：
 ```
 USAGE:
-    mksdimg <img | mount | umount | clean>
+    mksdimg <img [size(M)] | mount | umount | clean>
         1. img: make a img file.
         2. mount: mount img file system.
         3. umount: umount img file system.
@@ -31,7 +38,8 @@ USAGE:
 * 依赖文件：
   * `u-boot.bin`
   * `uImage`
-  * [rootfs.tar.bz2](https://github.com/ZengjfOS/ARMBaseFS/tree/i.mx6_base_fs): `cd <your filesystem path> && fakeroot -- tar jcvf rootfs.tar.bz2 *`
+  * [rootfs.tar.bz2](https://github.com/ZengjfOS/ARMBaseFS/tree/i.mx6_base_fs): clone the filesystem from linker and execute shell script like following to get tarball:  
+    `cd <your filesystem path> && fakeroot -- tar jcvf rootfs.tar.bz2 *`
 
 ## 生成sd.img文件输出信息
 

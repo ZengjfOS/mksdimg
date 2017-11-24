@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -x
+
+ROOTFS_SIZE=`du -hs | awk '{print $1}'`
+echo "rootfs file system size: ${ROOTFS_SIZE} MB."
+
+SD_IMG_SIZE=`echo "${ROOTFS_SIZE%%M} + 20" | bc`
+echo "SD CARD size: ${SD_IMG_SIZE} MB."
+
+fakeroot -- tar jcvf rootfs.tar.bz2 * > /dev/null
+
+if [ -d "../mksdimg" ]; then
+    mv rootfs.tar.bz2 ../mksdimg
+    cd ../mksdimg
+    ./mksdimg img ${SD_IMG_SIZE}
+
+    if [ -d "/media/aplex/BOOT" ]; then
+        cp sd.img /media/aplex/BOOT
+    fi
+
+    sync
+fi
